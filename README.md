@@ -1,5 +1,5 @@
-# ESP-Mini-D1-mit-Alexa-und-5-Relais
+# ESP-Mini D1 mit 8 Relais über Sonoff und somit auch Alexa steuern
 
-Hier erstelle ich ein ESP Projekt, was ein ESP Mini D1 mit 5 Relais über Alexa schaltet.
+Hier erstelle ich ein ESP Projekt, was ein ESP Mini D1 mit 8 Relais über Sonoff/Alexa schaltet.
 
 Projekt ist noch in arbeit
