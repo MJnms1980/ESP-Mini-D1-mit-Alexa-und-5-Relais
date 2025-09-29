@@ -1,23 +1,19 @@
 # ESP8266 D1 8-Relais Steuerung
 
-Dieses Projekt stellt einen vollständigen Arduino-Sketch bereit, um ein ESP8266-12F (z. B. Wemos D1 mini oder NodeMCU) mit einem 8-Kanal-Relaisboard zu betreiben. Neben einer lokalen Weboberfläche unterstützt der Sketch:
+Dieser Sketch richtet ein ESP8266-12F (z. B. Wemos D1 mini oder NodeMCU) für den Betrieb mit einem 8-Kanal-Relaisboard ein. Das Gerät bietet:
 
-- Automatisches WLAN-Provisioning per Captive Portal (WiFiManager), wenn keine Zugangsdaten vorhanden sind oder die Verbindung fehlschlägt
-- Steuerung über die Sonoff-/eWeLink-App im lokalen DIY-Modus (HTTP-API auf Port 8081)
-- OTA-Firmwareupdates direkt über das WLAN (ArduinoOTA)
-- Eine einfache Weboberfläche zur manuellen Bedienung sämtlicher Relais und zur Statusanzeige
+- Eine lokale Weboberfläche zum Schalten aller acht Relais
+- Einen integrierten Einrichtungsmodus mit eigenem Access Point, falls kein WLAN gespeichert ist oder die Verbindung scheitert
+- Kompatibilität zur Sonoff-/eWeLink-App über die lokale DIY-HTTP-API (Port 8081)
+- OTA-Firmwareupdates über das WLAN (ArduinoOTA)
 
 ## Voraussetzungen
 
-1. **Arduino IDE** in aktueller Version mit installiertem ESP8266 Core.
-2. Die folgenden Bibliotheken müssen über den Bibliotheksverwalter installiert werden:
-   - [WiFiManager](https://github.com/tzapu/WiFiManager)
-   - [ArduinoJson](https://arduinojson.org/) (Version 6 oder neuer)
-3. Optional: Ein sicheres OTA-Passwort kann in `ArduinoOTA.setPasswordHash()` gesetzt werden.
+1. **Arduino IDE** in aktueller Version mit installiertem ESP8266 Core (Boardverwalter).
+2. Keine zusätzlichen Bibliotheken notwendig – alle verwendeten Header stammen aus dem ESP8266 Core.
+3. Optional: OTA-Uploads können mit einem Passwort versehen werden (siehe Hinweis im Sketch).
 
 ## Pinbelegung
-
-Die Standardbelegung nutzt die folgenden GPIOs (entsprechen bei vielen Boards den Pins D1–D8):
 
 | Relais | GPIO | Board-Pin |
 | ------ | ---- | --------- |
@@ -30,26 +26,28 @@ Die Standardbelegung nutzt die folgenden GPIOs (entsprechen bei vielen Boards de
 | 7      | 13   | D7        |
 | 8      | 15   | D8        |
 
-Falls Ihr Relais-Board aktiv-high arbeitet, kann `RELAY_ACTIVE_STATE` im Sketch auf `HIGH` geändert werden.
+Falls das verwendete Relaisboard aktiv-high arbeitet, setze `RELAY_ACTIVE_STATE` im Sketch auf `HIGH`.
 
 ## Verwendung
 
-1. Öffne die Datei `src/ESP_D1_Sonoff_8_Relais.ino` in der Arduino IDE.
-2. Wähle als Board „NodeMCU 1.0 (ESP-12E Module)“ oder ein passendes ESP8266-12F Profil.
-3. Kompiliere und lade den Sketch.
-4. Beim ersten Start (oder wenn das WLAN nicht erreichbar ist) öffnet der Controller einen Access Point `ESP8266-Relais-Setup`. Verbinde dich und trage deine WLAN-Zugangsdaten ein.
-5. Nach erfolgreicher Verbindung stehen folgende Funktionen zur Verfügung:
-   - **Weboberfläche:** `http://<IP-Adresse>` → Übersicht und Schalten aller Relais.
-   - **Sonoff DIY API:** Die eWeLink-App findet das Gerät im lokalen Modus. Device-ID und API-Key können im Sketch angepasst werden.
-   - **OTA Update:** In der Arduino IDE „Sketch → Upload via Netzwerk“ auswählen, sobald das Gerät im gleichen Netzwerk ist.
+1. Öffne `src/ESP_D1_Sonoff_8_Relais.ino` in der Arduino IDE und wähle ein passendes ESP8266-Boardprofil (z. B. „NodeMCU 1.0“).
+2. Kompiliere und lade den Sketch auf das Board.
+3. Beim ersten Start oder wenn das konfigurierte WLAN nicht erreichbar ist, startet der Controller einen Access Point `ESP8266-Relais-Setup` (Standardpasswort `12345678`).
+4. Verbinde dich mit dem Access Point und rufe `http://192.168.4.1` auf. Trage dort SSID und Passwort deines WLANs ein. Das Gerät startet danach neu und versucht sich zu verbinden.
+5. Im normalen Betrieb stehen folgende Funktionen bereit:
+   - **Weboberfläche:** `http://<IP-Adresse>` → Status und manuelle Steuerung der Relais.
+   - **Sonoff DIY API:** Die eWeLink-App kann das Gerät im lokalen Modus ansprechen. Passe bei Bedarf `DEVICE_ID` und `DEVICE_NAME` an.
+   - **OTA Update:** In der Arduino IDE „Sketch → Upload über Netzwerk“ wählen, sobald das Gerät erreichbar ist.
 
 ## Anpassungen
 
-- `DEVICE_ID`, `DEVICE_NAME` und `DEVICE_APKEY` sollten pro Gerät individuell gesetzt werden.
-- Die Anzahl der Relais lässt sich über `RELAY_COUNT` und das `RELAY_PINS`-Array erweitern oder verkleinern.
-- Für zusätzliche Integrationen (MQTT, Home Assistant, …) kann die Funktion `broadcastRelayState()` erweitert werden.
+- Die gespeicherten WLAN-Zugangsdaten werden im Flash (EEPROM-Emulation) abgelegt. Ein erneutes Öffnen des Konfigurationsportals ist möglich, indem das WLAN vorübergehend deaktiviert wird.
+- `RELAY_PINS` kann für andere Boards angepasst werden. Die Anzahl der Relais ergibt sich aus `RELAY_COUNT`.
+- Die Sonoff-Antworten sind bewusst einfach gehalten. Bei Bedarf lassen sich zusätzliche Felder ergänzen.
+- Setze bei produktivem Einsatz ein OTA-Passwort (`ArduinoOTA.setPassword()` oder `setPasswordHash()` im Sketch aktivieren) und sichere den Zugriff auf den DIY-Port 8081.
 
-## Sicherheitshinweise
+## Fehlerbehebung
 
-- Verwende ein separates, sicheres Netz oder aktiviere ein OTA-Passwort, wenn das Gerät produktiv eingesetzt wird.
-- Die Sonoff DIY API erlaubt lokale Steuerung ohne zusätzliche Authentifizierung. Setze ggf. Firewall-Regeln, um unbefugte Zugriffe zu verhindern.
+- **Keine Verbindung im Normalmodus:** Prüfe, ob die hinterlegten Zugangsdaten korrekt sind. Das Gerät fällt nach einigen Sekunden automatisch wieder in den Einrichtungsmodus zurück.
+- **Sonoff-App findet das Gerät nicht:** Stelle sicher, dass die App und der Controller im selben Netzwerk sind und dass Port 8081 nicht blockiert wird.
+- **OTA-Upload schlägt fehl:** Stelle sicher, dass sich Board und Rechner im selben Subnetz befinden und dass keine Firewall den mDNS-Dienst (`_arduino._tcp`) blockiert.
