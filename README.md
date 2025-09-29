@@ -2,7 +2,7 @@
 
 Dieser Sketch richtet ein ESP8266-12F (z. B. Wemos D1 mini oder NodeMCU) für den Betrieb mit einem 8-Kanal-Relaisboard ein. Das Gerät bietet:
 
-- Eine lokale Weboberfläche zum Schalten aller acht Relais
+- Eine lokale Weboberfläche zum Schalten aller acht Relais (Relais 1–6 als Taster, 7–8 als Schalter)
 - Einen integrierten Einrichtungsmodus mit eigenem Access Point, falls kein WLAN gespeichert ist oder die Verbindung scheitert
 - Kompatibilität zur Sonoff-/eWeLink-App über die lokale DIY-HTTP-API (Port 8081)
 - OTA-Firmwareupdates über das WLAN (ArduinoOTA)
@@ -43,6 +43,7 @@ Falls das verwendete Relaisboard aktiv-high arbeitet, setze `RELAY_ACTIVE_STATE`
 
 - Die gespeicherten WLAN-Zugangsdaten werden im Flash (EEPROM-Emulation) abgelegt. Ein erneutes Öffnen des Konfigurationsportals ist möglich, indem das WLAN vorübergehend deaktiviert wird.
 - `RELAY_PINS` kann für andere Boards angepasst werden. Die Anzahl der Relais ergibt sich aus `RELAY_COUNT`.
+- Die Impulsdauer der Taster (Relais 1–6) legst du über `MOMENTARY_PULSE_MS` im Sketch fest.
 - Die Sonoff-Antworten sind bewusst einfach gehalten. Bei Bedarf lassen sich zusätzliche Felder ergänzen.
 - Setze bei produktivem Einsatz ein OTA-Passwort (`ArduinoOTA.setPassword()` oder `setPasswordHash()` im Sketch aktivieren) und sichere den Zugriff auf den DIY-Port 8081.
 

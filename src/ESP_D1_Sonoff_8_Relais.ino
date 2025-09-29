@@ -39,6 +39,9 @@ ESP8266WebServer uiServer(80);
 ESP8266WebServer diyServer(8081);
 
 bool relayStates[RELAY_COUNT] = {false};
+static const unsigned long MOMENTARY_PULSE_MS = 250;
+bool momentaryPending[RELAY_COUNT] = {false};
+unsigned long momentaryReleaseAt[RELAY_COUNT] = {0};
 bool wifiConnected = false;
 bool configMode = false;
 uint32_t sonoffSequence = 1;
@@ -51,12 +54,37 @@ bool diyRoutesConfigured = false;
 // ---------------------------------------------------------------------------
 // Helper utilities
 // ---------------------------------------------------------------------------
+inline bool isMomentaryRelay(uint8_t index) {
+  return index < 6;
+}
+
 void applyRelayState(uint8_t index, bool state) {
   if (index >= RELAY_COUNT) {
     return;
   }
   relayStates[index] = state;
   digitalWrite(RELAY_PINS[index], state ? RELAY_ACTIVE_STATE : RELAY_INACTIVE_STATE);
+  if (isMomentaryRelay(index)) {
+    if (state) {
+      momentaryPending[index] = true;
+      momentaryReleaseAt[index] = millis() + MOMENTARY_PULSE_MS;
+    } else {
+      momentaryPending[index] = false;
+      momentaryReleaseAt[index] = 0;
+    }
+  }
+}
+
+void serviceMomentaryRelays() {
+  unsigned long now = millis();
+  for (uint8_t i = 0; i < RELAY_COUNT; i++) {
+    if (!isMomentaryRelay(i)) {
+      continue;
+    }
+    if (momentaryPending[i] && (long)(now - momentaryReleaseAt[i]) >= 0) {
+      applyRelayState(i, false);
+    }
+  }
 }
 
 void turnAllRelaysOff() {
@@ -470,6 +498,7 @@ void setup() {
 }
 
 void loop() {
+  serviceMomentaryRelays();
   if (configMode) {
     uiServer.handleClient();
     if (haveStoredCredentials()) {
